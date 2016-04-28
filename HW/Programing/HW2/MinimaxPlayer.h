@@ -30,10 +30,10 @@ public:
 	virtual ~MinimaxPlayer();
 
 	void utility();
-    void successor();
-    void minimaxDecision();
-    void minValue();
-    void maxValue();
+    OthelloBoard* successor(OthelloBoard* b);
+    void minimaxDecision(OthelloBoard* b);
+    void minValue(OthelloBoard* b);
+    void maxValue(OthelloBoard* b);
     
     /**
 	 * @param b The board object for the current state of the board
