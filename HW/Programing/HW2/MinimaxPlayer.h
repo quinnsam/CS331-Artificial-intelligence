@@ -32,8 +32,8 @@ public:
 	int utility(OthelloBoard* b);
     std::vector<OthelloBoard*> successor(OthelloBoard* b, char symb);
     void minimaxDecision(OthelloBoard* b, int& col, int& row);
-    int minValue(OthelloBoard* b, int& col, int& row);
-    int maxValue(OthelloBoard* b, int& col, int& row);
+    int minValue(OthelloBoard* b, int& col, int& row, char sym);
+    int maxValue(OthelloBoard* b, int& col, int& row, char sym);
     
     /**
 	 * @param b The board object for the current state of the board

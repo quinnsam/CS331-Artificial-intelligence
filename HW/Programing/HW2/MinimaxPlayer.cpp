@@ -45,7 +45,7 @@ vector<OthelloBoard*> MinimaxPlayer::successor(OthelloBoard* b, char symb){
             }
         }
     }
-    cout << "Successors created: " << s << endl;
+    //cout << "Successors created: " << s << endl;
     return v;
 
 
@@ -53,29 +53,42 @@ vector<OthelloBoard*> MinimaxPlayer::successor(OthelloBoard* b, char symb){
 
 void MinimaxPlayer::minimaxDecision(OthelloBoard* b, int& col, int& row){
     // To be filled in
-    if (b->get_p1_symbol() == symbol) {
-        cout << "Max: " << maxValue(b, col, row) << endl;
+    //if (b->get_p1_symbol() == symbol) {
+    //    cout << "Max: " << minValue(b, col, row) << endl;
+    //} else {
+    //    cout << " Min: " << maxValue(b, col, row) << endl;
+    //}
+    //cout << symbol << endl; 
+    int i;
+    //std::cin >> i;
+    if (symbol == b->get_p1_symbol()) {
+        maxValue(b,col,row, 'X');
     } else {
-        cout << " Min: " << minValue(b, col, row) << endl;
+        maxValue(b,col,row, 'O');
     }
-    cout << "Col=" << col << " Row=" << row << endl;
+    //cout << "Col=" << col << " Row=" << row << endl;
 }
 
-int MinimaxPlayer::maxValue(OthelloBoard* b, int& col, int& row) {
+int MinimaxPlayer::maxValue(OthelloBoard* b, int& col, int& row, char sym) {
     int max = INT_MIN;
     int max_col = 0;
     int max_row = 0;
+    vector<OthelloBoard*> succ;
     
-    vector<OthelloBoard*> succ = successor(b, 'X');
+    if (sym == 'O') {
+        succ = successor(b, 'O');
+    } else {
+        succ = successor(b, 'X');
+    } 
     
     // Test if Terminal or not
     if (succ.size() == 0) {
         return utility(b);
     }
     for(int i = 0; i < succ.size(); i++) {
-        cout << "Board: " << succ[i]->count_score('X')  << endl;
-        if (max < maxValue(succ[i], col, row)) {
-            max = maxValue(succ[i], col, row);
+        //cout << "Board: " << succ[i]->count_score('X')  << endl;
+        if (max < minValue(succ[i], col, row, sym)) {
+            max = minValue(succ[i], col, row, sym);
             max_col = succ[i]->get_col();
             max_row = succ[i]->get_row();
         }
@@ -89,21 +102,26 @@ int MinimaxPlayer::maxValue(OthelloBoard* b, int& col, int& row) {
 
 }
 
-int MinimaxPlayer::minValue(OthelloBoard* b, int& col, int& row) {
+int MinimaxPlayer::minValue(OthelloBoard* b, int& col, int& row, char sym) {
     int min = INT_MAX;
     int min_col = 0;
     int min_row = 0;
     
-    vector<OthelloBoard*> succ = successor(b, 'O');
+    vector<OthelloBoard*> succ;
+    if (sym == 'O') {
+        succ = successor(b, 'X');
+    } else {
+        succ = successor(b, 'O');
+    }
     
     // Test if Terminal or not
     if (succ.size() == 0) {
         return utility(b);
     }
     for(int i = 0; i < succ.size(); i++) {
-        cout << "Board: " << succ[i]->count_score('O')  << endl;
-        if (min > minValue(succ[i], col, row)) {
-            min = minValue(succ[i], col, row);
+        //cout << "Board: " << succ[i]->count_score('O')  << endl;
+        if (min > minValue(succ[i], col, row, sym)) {
+            min = minValue(succ[i], col, row, sym);
             min_col = succ[i]->get_col();
             min_row = succ[i]->get_row();
         }
