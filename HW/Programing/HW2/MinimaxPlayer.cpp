@@ -23,7 +23,12 @@ MinimaxPlayer::~MinimaxPlayer() {
 
 int MinimaxPlayer::utility(OthelloBoard* b){
     // To be filled in
-    return b->count_score(b->get_p1_symbol()) - b->count_score(b->get_p2_symbol());
+    if (symbol == 'O') {
+        return b->count_score(b->get_p2_symbol()) - b->count_score(b->get_p1_symbol());
+    } else { 
+        return b->count_score(b->get_p1_symbol()) - b->count_score(b->get_p2_symbol());
+    }
+
 }
 
 vector<OthelloBoard*> MinimaxPlayer::successor(OthelloBoard* b, char symb){
