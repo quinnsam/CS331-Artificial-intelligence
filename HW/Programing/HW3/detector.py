@@ -24,6 +24,7 @@ import ast
 i = []
 t = []
 bag = []
+vocab = []
 
 def usage():
     print sys.argv[0] + "  <it>||<input,train> [hv] [help]"
@@ -37,11 +38,16 @@ def data_print(l):
     for tup in l:
         print str(tup[1]) + "\t" + tup[0]
 
+def output(out_file, l, verbose):
+    if verbose:
+        print "Output file: " + out_file
+
 
 def preprocess(input_file, train_file, verbose):
     global i
     global t
     global bag
+    global vocab
     if verbose:
         print "Input file: " + str(input_file)
         print "Train file: " + str(train_file)
@@ -52,16 +58,14 @@ def preprocess(input_file, train_file, verbose):
             #print '##### ' + line.strip() + '######'
             temp = line.split(',')
             if len(temp) == 2:
-                print
-                i.append((temp[0].translate(None, string.punctuation),bool(int(temp[1].strip(temp[1].translate(None, string.digits))))))
+                i.append(((temp[0].translate(None, string.punctuation)).lower(),bool(int(temp[1].strip(temp[1].translate(None, string.digits))))))
 
     with open(train_file) as f:
         for line in f:
             #print '##### ' + line.strip() + '######'
             temp = line.split(',')
             if len(temp) == 2:
-                print
-                t.append((temp[0].translate(None, string.punctuation),bool(int(temp[1].strip(temp[1].translate(None, string.digits))))))
+                t.append(((temp[0].translate(None, string.punctuation)).lower(),bool(int(temp[1].strip(temp[1].translate(None, string.digits))))))
 
     if verbose > 1:
         print 'Test data:'
@@ -71,9 +75,30 @@ def preprocess(input_file, train_file, verbose):
 
     for tup in i:
         for word in tup[0].split(' '):
-            bag.append(word)
+            if word:
+                bag.append(word.lower())
+
+    for tup in t:
+        for word in tup[0].split(' '):
+            if word:
+                vocab.append(word.lower())
+
+    # Write to files
+
+    print ', '.join(sorted(vocab)) + ', classlable'
+    for tup in i:
+        tl = sorted(tup[0].split(' '))
+        if '' in tl: tl.remove('')
+        #print ', '.join(tl)
+        for word in vocab:
+            if word in tl:
+                print'1,',
+            else:
+                print '0,',
+        print tup[1]
 
     bag = sorted(bag)
+    vocab = sorted(vocab)
 
 
 
@@ -82,6 +107,7 @@ def preprocess(input_file, train_file, verbose):
 def classification(verbose):
     if verbose:
         print "Bag of words: ", bag
+        print "vocab: ", vocab
 
 
 def main():
