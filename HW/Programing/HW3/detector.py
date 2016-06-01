@@ -25,10 +25,10 @@ i = []
 t = []
 i_f = []
 t_f = []
-bag = []
 vocab = {}
 vocab_list = []
 total_sarcastic = 0
+
 def usage():
     print sys.argv[0] + "  <it>||<input,train> [hv] [help]"
     print "\t-i,--input\t\tInput file"
@@ -59,7 +59,6 @@ def output(verbose):
         tl = sorted(tup[0].split(' '))
         if '' in tl: tl.remove('')
         temp = []
-        #print ', '.join(tl)
         for word in sorted(vocab.keys()):
             if word in tl:
                 if verbose: print'1,',
@@ -131,10 +130,6 @@ def preprocess(input_file, train_file, verbose):
         print 'Train data:'
         data_print(t)
 
-    for tup in i:
-        for word in tup[0].split(' '):
-            if word:
-                bag.append(word.lower())
 
     for tup in t:
         for word in tup[0].split(' '):
@@ -165,18 +160,14 @@ def preprocess(input_file, train_file, verbose):
     # Print to files
     output(verbose)
 
-
-    bag = sorted(bag)
-
-
 def classification(verbose):
     pr = {}
     pr_true = float(total_sarcastic) / float(len(t_f))
     pr_false = float(len(t_f) - total_sarcastic) / float(len(t_f))
-    if verbose:
-        print "Bag of words: ", bag
-        print "vocab: ", vocab
+    result = open('results.txt', 'wb')
 
+    if verbose:
+        print "vocab: ", vocab
 
     for key, value in vocab.iteritems():
         # Get the probability of each word [TT,TF,FT,FF]
@@ -186,20 +177,17 @@ def classification(verbose):
         print t_f
         print pr
 
+    train = True
     # For feature in feature list
     for data_set in [t_f, i_f]:
         ct = 0
-        print len(data_set)
         for f in data_set:
             # Probability that the sentance is sarcastic
             true_prod = 1.0
             false_prod = 1.0
-            #print 'test', f[-1]
             for fet in xrange(len(f)-1):
                 if f[fet]:
-                    #print vocab_list[fet] + ' ',
                     if vocab_list[fet] in pr.keys():
-                        #print str(vocab_list[fet]) + ' ' + str(pr[vocab_list[fet]][0]) + ' ' + str(pr[vocab_list[fet]][3])
                         true_prod += pr[vocab_list[fet]][0]
                         false_prod += pr[vocab_list[fet]][3]
 
@@ -209,10 +197,23 @@ def classification(verbose):
             else:
                 if verbose: print 'false: ', false_prod
                 if not f[-1]: ct += 1
-        print (float(ct)/float(len(data_set)))
-
-
-
+        if train:
+            print 'Training: ', (float(ct)/float(len(data_set)))
+            result.write('Training: ' + str(float(ct)/float(len(data_set))) + '%\n')
+            print 'Data Set Size: ', len(data_set)
+            result.write('Data Set Size: ' + str(len(data_set)) + '\n')
+            print 'Number Correct: ', ct
+            result.write('Number Correct: ' + str(ct) + '\n')
+            result.write('################################################################################\n')
+            print '################################################################################'
+            train = False
+        else:
+            print 'Test: ', (float(ct)/float(len(data_set)))
+            result.write('Test: ' + str(float(ct)/float(len(data_set))) + '%\n')
+            print 'Data Set Size: ', len(data_set)
+            result.write('Data Set Size: ' + str(len(data_set)) + '\n')
+            print 'Number Correct: ', ct
+            result.write('Number Correct: ' + str(ct) + '\n')
 
 
 def main():
