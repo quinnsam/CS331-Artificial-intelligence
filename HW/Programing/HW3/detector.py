@@ -18,14 +18,17 @@ import sys
 import os
 import string
 import ast
-
+from math import log10
 
 #global varibles
 i = []
 t = []
+i_f = []
+t_f = []
 bag = []
-vocab = []
-
+vocab = {}
+vocab_list = []
+total_sarcastic = 0
 def usage():
     print sys.argv[0] + "  <it>||<input,train> [hv] [help]"
     print "\t-i,--input\t\tInput file"
@@ -38,16 +41,72 @@ def data_print(l):
     for tup in l:
         print str(tup[1]) + "\t" + tup[0]
 
-def output(out_file, l, verbose):
-    if verbose:
-        print "Output file: " + out_file
+def output(verbose):
+    global vocab
+    global i
+    global t
+    global i_f
+    global t_f
+    global total_sarcastic
 
+    # Write to files
+    pre_train = open('preprocessed_train.txt', 'wb')
+    pre_test  = open('preprocessed_test.txt', 'wb')
+
+    if verbose: print ', '.join(sorted(vocab.keys())) + ', classlablel'
+    pre_train.write(', '.join(sorted(vocab.keys())) + ', classlabel\n')
+    for tup in t:
+        tl = sorted(tup[0].split(' '))
+        if '' in tl: tl.remove('')
+        temp = []
+        #print ', '.join(tl)
+        for word in sorted(vocab.keys()):
+            if word in tl:
+                if verbose: print'1,',
+                pre_train.write('1,')
+                temp.append(1)
+            else:
+                if verbose: print '0,',
+                pre_train.write('0,')
+                temp.append(0)
+            vocab_list.append(word)
+
+        if verbose: print tup[1]
+        if tup[1]: total_sarcastic += 1
+        pre_train.write(str(tup[1]) + '\n')
+        temp.append(tup[1])
+        t_f.append(temp)
+
+    pre_test.write(', '.join(sorted(vocab.keys())) + ', classlabel\n')
+    for tup in i:
+        tl = sorted(tup[0].split(' '))
+        if '' in tl: tl.remove('')
+        temp = []
+        #print ', '.join(tl)
+        for word in sorted(vocab.keys()):
+            if word in tl:
+                if verbose: print'1,',
+                pre_test.write('1,')
+                temp.append(1)
+            else:
+                if verbose: print '0,',
+                pre_test.write('0,')
+                temp.append(0)
+        if verbose: print tup[1]
+        pre_test.write(str(tup[1]) + '\n')
+        temp.append(tup[1])
+        i_f.append(temp)
+
+    pre_train.close()
+    pre_test.close()
 
 def preprocess(input_file, train_file, verbose):
     global i
     global t
     global bag
     global vocab
+    global vocab_list
+
     if verbose:
         print "Input file: " + str(input_file)
         print "Train file: " + str(train_file)
@@ -55,14 +114,13 @@ def preprocess(input_file, train_file, verbose):
     # Sanitize input files
     with open(input_file) as f:
         for line in f:
-            #print '##### ' + line.strip() + '######'
             temp = line.split(',')
             if len(temp) == 2:
                 i.append(((temp[0].translate(None, string.punctuation)).lower(),bool(int(temp[1].strip(temp[1].translate(None, string.digits))))))
 
+    # Read in the training file and normalize
     with open(train_file) as f:
         for line in f:
-            #print '##### ' + line.strip() + '######'
             temp = line.split(',')
             if len(temp) == 2:
                 t.append(((temp[0].translate(None, string.punctuation)).lower(),bool(int(temp[1].strip(temp[1].translate(None, string.digits))))))
@@ -80,62 +138,81 @@ def preprocess(input_file, train_file, verbose):
 
     for tup in t:
         for word in tup[0].split(' '):
-            if word:
-                vocab.append(word.lower())
+            if word and not word in vocab.keys():
+                if tup[1]:
+                    # Initialize value
+                    vocab[word.lower()] = [1, 1, 0]
+                else:
+                    # Initialize value
+                    vocab[word.lower()] = [1, 0, 1]
+            elif word in vocab.keys():
+                if tup[1]:
+                    # Increment word counter
+                    vocab[word][0] += 1
+                    # Increment sarcastic counter
+                    vocab[word][1] += 1
+                else:
+                    # Increment word counter
+                    vocab[word][0] += 1
+                    # Increment serious counter
+                    vocab[word][2] += 1
 
-    vocab = sorted(vocab)
 
-    # Write to files
-    pre_train = open('preprocessed_train.txt', 'wb')
-    pre_test  = open('preprocessed_test.txt', 'wb')
 
-    print ', '.join(sorted(vocab)) + ', classlablel'
-    pre_train.write(', '.join(vocab) + ', classlabel\n')
-    for tup in t:
-        tl = sorted(tup[0].split(' '))
-        if '' in tl: tl.remove('')
-        #print ', '.join(tl)
-        for word in vocab:
-            if word in tl:
-                print'1,',
-                pre_train.write('1,')
-            else:
-                print '0,',
-                pre_train.write('0,')
-        print tup[1]
-        pre_train.write(str(tup[1]) + '\n')
+    # Alphebetically sort the words
+    if verbose > 1: print vocab
 
-    pre_test.write(', '.join(vocab) + ', classlabel\n')
-    for tup in i:
-        tl = sorted(tup[0].split(' '))
-        if '' in tl: tl.remove('')
-        #print ', '.join(tl)
-        for word in vocab:
-            if word in tl:
-                print'1,',
-                pre_test.write('1,')
-            else:
-                print '0,',
-                pre_test.write('0,')
-        print tup[1]
-        pre_test.write(str(tup[1]) + '\n')
-
+    # Print to files
+    output(verbose)
 
 
     bag = sorted(bag)
-    vocab = sorted(vocab)
-
-    pre_train.close()
-    pre_test.close()
-
-
-
 
 
 def classification(verbose):
+    pr = {}
+    pr_true = float(total_sarcastic) / float(len(t_f))
+    pr_false = float(len(t_f) - total_sarcastic) / float(len(t_f))
     if verbose:
         print "Bag of words: ", bag
         print "vocab: ", vocab
+
+
+    for key, value in vocab.iteritems():
+        # Get the probability of each word [TT,TF,FT,FF]
+        pr[key] = [float(value[1]) / float(value[0]), float(value[1]) / float(value[0]), float(value[2]) / float(value[0]), float(value[2]) / float(value[0])]
+
+    if verbose:
+        print t_f
+        print pr
+
+    # For feature in feature list
+    for data_set in [t_f, i_f]:
+        ct = 0
+        print len(data_set)
+        for f in data_set:
+            # Probability that the sentance is sarcastic
+            true_prod = 1.0
+            false_prod = 1.0
+            #print 'test', f[-1]
+            for fet in xrange(len(f)-1):
+                if f[fet]:
+                    #print vocab_list[fet] + ' ',
+                    if vocab_list[fet] in pr.keys():
+                        #print str(vocab_list[fet]) + ' ' + str(pr[vocab_list[fet]][0]) + ' ' + str(pr[vocab_list[fet]][3])
+                        true_prod += pr[vocab_list[fet]][0]
+                        false_prod += pr[vocab_list[fet]][3]
+
+            if true_prod > false_prod:
+                if verbose: print 'true:', true_prod
+                if f[-1]: ct += 1
+            else:
+                if verbose: print 'false: ', false_prod
+                if not f[-1]: ct += 1
+        print (float(ct)/float(len(data_set)))
+
+
+
 
 
 def main():
