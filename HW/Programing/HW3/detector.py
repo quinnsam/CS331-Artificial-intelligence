@@ -83,9 +83,29 @@ def preprocess(input_file, train_file, verbose):
             if word:
                 vocab.append(word.lower())
 
-    # Write to files
+    vocab = sorted(vocab)
 
-    print ', '.join(sorted(vocab)) + ', classlable'
+    # Write to files
+    pre_train = open('preprocessed_train.txt', 'wb')
+    pre_test  = open('preprocessed_test.txt', 'wb')
+
+    print ', '.join(sorted(vocab)) + ', classlablel'
+    pre_train.write(', '.join(vocab) + ', classlabel\n')
+    for tup in t:
+        tl = sorted(tup[0].split(' '))
+        if '' in tl: tl.remove('')
+        #print ', '.join(tl)
+        for word in vocab:
+            if word in tl:
+                print'1,',
+                pre_train.write('1,')
+            else:
+                print '0,',
+                pre_train.write('0,')
+        print tup[1]
+        pre_train.write(str(tup[1]) + '\n')
+
+    pre_test.write(', '.join(vocab) + ', classlabel\n')
     for tup in i:
         tl = sorted(tup[0].split(' '))
         if '' in tl: tl.remove('')
@@ -93,12 +113,20 @@ def preprocess(input_file, train_file, verbose):
         for word in vocab:
             if word in tl:
                 print'1,',
+                pre_test.write('1,')
             else:
                 print '0,',
+                pre_test.write('0,')
         print tup[1]
+        pre_test.write(str(tup[1]) + '\n')
+
+
 
     bag = sorted(bag)
     vocab = sorted(vocab)
+
+    pre_train.close()
+    pre_test.close()
 
 
 
